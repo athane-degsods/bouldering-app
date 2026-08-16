@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains the Boulder Log React Native app in `BoulderLog/`.
+This repository contains the Boulder Log React Native app under `apps/mobile`.
 The app is built with Expo and uses local AsyncStorage for persistence.
 
 ## Run the app locally
@@ -10,22 +10,16 @@ The app is built with Expo and uses local AsyncStorage for persistence.
 ### 1. Install dependencies
 
 ```bash
-cd BoulderLog
 npm install
 ```
-
-> If this is a fresh checkout, install the Expo web dependencies too:
->
-> ```bash
-> npx expo install react-native-web react-dom
-> ```
 
 ### 2. Start Expo
 
 ```bash
-cd BoulderLog
-npx expo start --tunnel
+npm run dev:mobile
 ```
+
+This runs the Expo app from the monorepo mobile workspace.
 
 ### 3. Open the app
 
@@ -45,7 +39,7 @@ http://localhost:8083
 
 ## Optional backend configuration
 
-If your teammate wants to connect the app to a backend, create a `.env` file in the `BoulderLog/` folder with:
+If your teammate wants to connect the app to a backend, create a `.env` file in the monorepo root or in `apps/mobile/` depending on your setup, for example:
 
 ```env
 EXPO_PUBLIC_API_URL=https://your-backend-url
@@ -55,6 +49,6 @@ The app will fall back to local storage if this is not set.
 
 ## Notes
 
-- `npm start` is equivalent to `npx expo start` in `BoulderLog/`
+- The mobile frontend now lives at `apps/mobile`
 - The app currently uses Expo SDK 51
-- `BoulderLog/app/index.tsx` is the main home screen entry point
+- `apps/mobile/app/index.tsx` is the main home screen entry point
