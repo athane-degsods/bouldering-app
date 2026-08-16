@@ -109,10 +109,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.accent,
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
+    boxShadow: `0 5px 10px rgba(0, 0, 0, 0.3)`,
     elevation: 5,
   },
 });

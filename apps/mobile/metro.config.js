@@ -19,4 +19,15 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+// 4. Configure server to serve static files from public directory
+config.server = {
+  ...config.server,
+  rewriteRequestUrl: (url) => {
+    if (url.startsWith('/index.html')) {
+      return url;
+    }
+    return url;
+  },
+};
+
 module.exports = config;
