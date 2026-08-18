@@ -27,7 +27,7 @@ model Ascent {
   attempts   Int      @default(0)
   completed  Boolean  @default(false)
   notes      String?
-  imageKey   String? // S3 object key for a photo; null until uploaded
+  imageKeys  String[] @default([]) // S3 object keys for photos
   videoKey   String? // reserved for later; null until video upload is built
   userId     String
   user       User     @relation(fields: [userId], references: [id])

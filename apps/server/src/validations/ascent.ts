@@ -9,7 +9,7 @@ export const ascentResponseSchema = z.object({
   attempts: z.number().int().min(0),
   completed: z.boolean(),
   notes: z.string().nullable(),
-  imageKey: z.string().nullable(),
+  imageKeys: z.array(z.string()),
   videoKey: z.string().nullable(),
   userId: z.literal(TEST_USER_ID),
   createdAt: z.coerce.date(),
@@ -20,13 +20,14 @@ export const ascentListResponseSchema = z.array(ascentResponseSchema);
 /** `:id` in GET /api/ascents/:id — reject junk strings before Prisma. */
 export const ascentIdParamSchema = z.string().uuid();
 
-/** POST /api/ascents — client never sends userId or media keys. */
+/** POST /api/ascents — client never sends userId. imageKeys is set after MinIO PUTs. */
 export const createAscentBodySchema = z.object({
   routeName: z.string().min(1),
   grade: z.string().min(1),
   attempts: z.number().int().min(0).optional(),
   completed: z.boolean().optional(),
   notes: z.string().optional(),
+  imageKeys: z.array(z.string().min(1)).optional(),
 });
 
 /** PATCH /api/ascents/:id — at least one field must be present. */
@@ -44,7 +45,7 @@ export function toAscentJson(ascent: unknown) {
     attempts: parsed.attempts,
     completed: parsed.completed,
     notes: parsed.notes,
-    imageKey: parsed.imageKey,
+    imageKeys: parsed.imageKeys,
     videoKey: parsed.videoKey,
     userId: parsed.userId,
     createdAt: parsed.createdAt.toISOString(),

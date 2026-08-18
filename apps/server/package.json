@@ -12,9 +12,13 @@
         "test:ascents-post": "vitest run tests/ascents-post.test.ts",
         "test:ascents-patch": "vitest run tests/ascents-patch.test.ts",
         "test:ascents-delete": "vitest run tests/ascents-delete.test.ts",
+        "test:uploads-presign": "vitest run tests/uploads-presign.test.ts",
+        "test:uploads-presign-get": "vitest run tests/uploads-presign-get.test.ts",
         "db:seed": "prisma db seed"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.1112.0",
+        "@aws-sdk/s3-request-presigner": "^3.1112.0",
         "@prisma/adapter-pg": "^7.9.1",
         "@prisma/client": "^7.9.1",
         "cors": "^2.8.6",

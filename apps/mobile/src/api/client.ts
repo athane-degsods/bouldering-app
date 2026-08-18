@@ -47,7 +47,7 @@ export type Ascent = {
   attempts: number;
   completed: boolean;
   notes: string | null;
-  imageKey: string | null;
+  imageKeys: string[];
   videoKey: string | null;
   userId: string;
   createdAt: string;
@@ -75,6 +75,7 @@ export type AscentWrite = {
   attempts: number;
   completed: boolean;
   notes?: string;
+  imageKeys?: string[];
 };
 
 export async function createAscent(body: AscentWrite): Promise<Ascent> {
@@ -108,4 +109,64 @@ export async function deleteAscent(id: string): Promise<void> {
   if (!response.ok) {
     throw new Error('Failed to delete ascent');
   }
+}
+
+export type PresignUpload = {
+  url: string;
+  key: string;
+  contentType: string;
+};
+
+/** Ask Express to sign a MinIO PUT. Does not upload bytes. */
+export async function presignUpload(
+  fileName: string,
+  contentType: string,
+): Promise<PresignUpload> {
+  const response = await fetch(`${BASE_URL}/api/uploads/presign`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fileName, contentType }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to get upload URL');
+  }
+  return response.json();
+}
+
+/** PUT bytes to the signed MinIO/S3 URL. Express never sees this body. */
+export async function putToSignedUrl(
+  url: string,
+  body: Blob,
+  contentType: string,
+): Promise<void> {
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': contentType },
+    body,
+  });
+  if (!response.ok) {
+    throw new Error('Failed to upload file');
+  }
+}
+
+export type SignedGet = {
+  key: string;
+  url: string;
+};
+
+/** Ask Express to sign MinIO GET URLs for keys already stored on the ascent. */
+export async function presignGets(keys: string[]): Promise<SignedGet[]> {
+  if (keys.length === 0) {
+    return [];
+  }
+  const response = await fetch(`${BASE_URL}/api/uploads/presign-get`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to get download URLs');
+  }
+  const body = (await response.json()) as { items: SignedGet[] };
+  return body.items;
 }

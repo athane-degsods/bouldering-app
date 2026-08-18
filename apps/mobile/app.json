@@ -25,7 +25,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Boulder Logs to pick a climb photo."
+        }
+      ]
     ]
   }
 }

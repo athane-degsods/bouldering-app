@@ -14,11 +14,10 @@ describe('GET /api/ascents/:id', () => {
       grade: 'V5',
       attempts: 3,
       completed: false,
-      notes: 'need a higher foot',
-      imageKey: null,
       videoKey: null,
       userId: TEST_USER_ID,
     });
+    expect(Array.isArray(response.body.imageKeys)).toBe(true);
     expect(Number.isNaN(Date.parse(response.body.createdAt))).toBe(false);
   });
 

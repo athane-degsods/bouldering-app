@@ -30,7 +30,7 @@ describe('POST /api/ascents', () => {
       attempts: 2,
       completed: true,
       notes: 'created in test',
-      imageKey: null,
+      imageKeys: [],
       videoKey: null,
       userId: TEST_USER_ID,
     });

@@ -37,6 +37,30 @@ describe('PATCH /api/ascents/:id', () => {
     });
   });
 
+  it('appends photo keys on imageKeys', async () => {
+    const created = await request(app).post('/api/ascents').send({
+      routeName: 'Photo Patch',
+      grade: 'V3',
+    });
+    expect(created.status).toBe(201);
+    createdIds.push(created.body.id);
+
+    const first = `ascents/${created.body.userId}/first.jpg`;
+    const second = `ascents/${created.body.userId}/second.jpg`;
+
+    const one = await request(app)
+      .patch(`/api/ascents/${created.body.id}`)
+      .send({ imageKeys: [first] });
+    expect(one.status).toBe(200);
+    expect(one.body.imageKeys).toEqual([first]);
+
+    const two = await request(app)
+      .patch(`/api/ascents/${created.body.id}`)
+      .send({ imageKeys: [first, second] });
+    expect(two.status).toBe(200);
+    expect(two.body.imageKeys).toEqual([first, second]);
+  });
+
   it('returns 400 when the body is empty', async () => {
     const created = await request(app).post('/api/ascents').send({
       routeName: 'Empty Patch',

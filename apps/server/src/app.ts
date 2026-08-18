@@ -4,6 +4,13 @@ import { prisma } from './lib/prisma.js';
 import { TEST_USER_EMAIL, TEST_USER_ID } from './config/testSeeds.js';
 import { ascentIdParamSchema, createAscentBodySchema, toAscentJson, toAscentListJson, updateAscentBodySchema } from './validations/ascent.js';
 import { toTestUserJson } from './validations/user.js';
+import { createPresignedGet, createPresignedPut } from './lib/presign.js';
+import {
+  presignBodySchema,
+  presignGetBodySchema,
+  presignGetResponseSchema,
+  presignResponseSchema,
+} from './validations/upload.js';
 
 export const app = express();
 
@@ -16,6 +23,45 @@ app.get('/api/health', (req: Request, res: Response) => {
     status: 'ok',
     message: '🧗‍♂️ Bouldering API server is healthy and running!',
   });
+});
+
+// POST: Short-lived MinIO/S3 PUT URL. Phone uploads bytes; Express never sees the file.
+app.post('/api/uploads/presign', async (req: Request, res: Response) => {
+  const bodyResult = presignBodySchema.safeParse(req.body);
+  if (!bodyResult.success) {
+    return res.status(400).json({ error: 'Invalid presign body' });
+  }
+
+  try {
+    const signed = await createPresignedPut(
+      bodyResult.data.fileName,
+      bodyResult.data.contentType,
+    );
+    return res.status(200).json(presignResponseSchema.parse(signed));
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to create upload URL' });
+  }
+});
+
+// POST: Short-lived MinIO/S3 GET URLs for keys the test user owns.
+app.post('/api/uploads/presign-get', async (req: Request, res: Response) => {
+  const bodyResult = presignGetBodySchema.safeParse(req.body);
+  if (!bodyResult.success) {
+    return res.status(400).json({ error: 'Invalid presign body' });
+  }
+
+  try {
+    const items = await Promise.all(
+      bodyResult.data.keys.map((key) => createPresignedGet(key)),
+    );
+    return res.status(200).json(presignGetResponseSchema.parse({ items }));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message === 'Invalid object key') {
+      return res.status(400).json({ error: 'Invalid object key' });
+    }
+    return res.status(500).json({ error: 'Failed to create download URLs' });
+  }
 });
 
 // GET: Seeded test climber (must stay above any /api/users/:id route)

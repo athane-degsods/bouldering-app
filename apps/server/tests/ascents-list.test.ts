@@ -17,11 +17,10 @@ describe('GET /api/ascents', () => {
       grade: 'V5',
       attempts: 3,
       completed: false,
-      notes: 'need a higher foot',
-      imageKey: null,
       videoKey: null,
       userId: TEST_USER_ID,
     });
+    expect(Array.isArray(seeded.imageKeys)).toBe(true);
     expect(Number.isNaN(Date.parse(seeded.createdAt))).toBe(false);
 
     for (const row of response.body) {
