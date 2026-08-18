@@ -21,10 +21,15 @@ model User {
 }
 
 model Ascent {
-  id        String   @id @default(uuid())
-  routeName String
-  grade     String   // e.g., "V5" or "6C+"
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  routeName  String
+  grade      String // e.g., "V5" or "6C+"
+  attempts   Int      @default(0)
+  completed  Boolean  @default(false)
+  notes      String?
+  imageKey   String? // S3 object key for a photo; null until uploaded
+  videoKey   String? // reserved for later; null until video upload is built
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
 }

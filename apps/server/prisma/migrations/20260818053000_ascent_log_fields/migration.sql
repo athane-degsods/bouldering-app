@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Ascent" ADD COLUMN "attempts" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Ascent" ADD COLUMN "completed" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Ascent" ADD COLUMN "notes" TEXT;
+ALTER TABLE "Ascent" ADD COLUMN "imageKey" TEXT;
+ALTER TABLE "Ascent" ADD COLUMN "videoKey" TEXT;
