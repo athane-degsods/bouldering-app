@@ -9,6 +9,12 @@
     "dev:server": "npm run dev --workspace=apps/server",
     "dev:mobile": "npm run start --workspace=apps/mobile",
     "test:server": "npm run test --workspace=apps/server",
+    "test:users-test": "npm run test:users-test --workspace=apps/server",
+    "test:ascents-list": "npm run test:ascents-list --workspace=apps/server",
+    "test:ascents-get": "npm run test:ascents-get --workspace=apps/server",
+    "test:ascents-post": "npm run test:ascents-post --workspace=apps/server",
+    "test:ascents-patch": "npm run test:ascents-patch --workspace=apps/server",
+    "test:ascents-delete": "npm run test:ascents-delete --workspace=apps/server",
     "lint": "eslint ."
   },
   "devDependencies": {
@@ -18,6 +24,7 @@
     "typescript-eslint": "^8.66.0"
   },
   "dependencies": {
-    "globals": "^17.9.0"
+    "globals": "^17.9.0",
+    "zod": "^4.4.3"
   }
 }
