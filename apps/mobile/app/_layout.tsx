@@ -63,6 +63,7 @@ function RootShell() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="ascent/new" options={{ title: 'New log' }} />
       <Stack.Screen name="ascent/[id]" options={{ title: 'Ascent' }} />
     </Stack>
   );

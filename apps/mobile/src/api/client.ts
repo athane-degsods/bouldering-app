@@ -40,11 +40,72 @@ export async function fetchHealth() {
   }
 }
 
-// Helper fetch function
-export async function fetchUsers() {
-  const response = await fetch(`${BASE_URL}/api/users`);
+export type Ascent = {
+  id: string;
+  routeName: string;
+  grade: string;
+  attempts: number;
+  completed: boolean;
+  notes: string | null;
+  imageKey: string | null;
+  videoKey: string | null;
+  userId: string;
+  createdAt: string;
+};
+
+export async function fetchAscents(): Promise<Ascent[]> {
+  const response = await fetch(`${BASE_URL}/api/ascents`);
   if (!response.ok) {
-    throw new Error('Network response was not ok');
+    throw new Error('Failed to load ascents');
   }
   return response.json();
+}
+
+export async function fetchAscent(id: string): Promise<Ascent> {
+  const response = await fetch(`${BASE_URL}/api/ascents/${id}`);
+  if (!response.ok) {
+    throw new Error('Failed to load ascent');
+  }
+  return response.json();
+}
+
+export type AscentWrite = {
+  routeName: string;
+  grade: string;
+  attempts: number;
+  completed: boolean;
+  notes?: string;
+};
+
+export async function createAscent(body: AscentWrite): Promise<Ascent> {
+  const response = await fetch(`${BASE_URL}/api/ascents`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create ascent');
+  }
+  return response.json();
+}
+
+export async function updateAscent(id: string, body: Partial<AscentWrite>): Promise<Ascent> {
+  const response = await fetch(`${BASE_URL}/api/ascents/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update ascent');
+  }
+  return response.json();
+}
+
+export async function deleteAscent(id: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/api/ascents/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete ascent');
+  }
 }
