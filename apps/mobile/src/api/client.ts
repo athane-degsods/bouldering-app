@@ -18,6 +18,28 @@ export const queryClient = new QueryClient({
   },
 });
 
+const HEALTH_TIMEOUT_MS = 4000;
+
+/** True when Express answers GET /api/health. Used by the root layout. */
+export async function fetchHealth() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/health`, {
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error('API is not reachable');
+    }
+    return response.json();
+  } catch {
+    throw new Error('API is not reachable');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Helper fetch function
 export async function fetchUsers() {
   const response = await fetch(`${BASE_URL}/api/users`);
