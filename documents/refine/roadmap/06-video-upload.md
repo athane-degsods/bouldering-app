@@ -1,5 +1,7 @@
 # Step 6 — Video upload (not recording)
 
+**Next remaining slice.** Do this before a UI polish pass. A clip on the log is how you review beta after the session; photos alone are not enough for that.
+
 ## Learn
 
 Same as photos: presign → PUT to S3 → save `videoKey`. Larger files; keep the PUT on S3.
@@ -23,4 +25,4 @@ Same as photos: presign → PUT to S3 → save `videoKey`. Larger files; keep th
 
 ## Done
 
-A short clip uploads and plays after restart.
+A short clip uploads and plays after Save and after reopening the log.

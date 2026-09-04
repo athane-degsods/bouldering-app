@@ -5,6 +5,7 @@ import { TEST_USER_ID } from '../config/testSeeds.js';
 import { createS3Client, s3Bucket } from './s3.js';
 
 const PUT_EXPIRES_SECONDS = 300;
+const VIDEO_PUT_EXPIRES_SECONDS = 900;
 const GET_EXPIRES_SECONDS = 3600;
 
 export function isTestUserObjectKey(key: string) {
@@ -26,7 +27,7 @@ export async function createPresignedPut(fileName: string, contentType: string) 
       Key: key,
       ContentType: contentType,
     }),
-    { expiresIn: PUT_EXPIRES_SECONDS },
+    { expiresIn: contentType.startsWith('video/') ? VIDEO_PUT_EXPIRES_SECONDS : PUT_EXPIRES_SECONDS },
   );
 
   return { url, key, contentType };

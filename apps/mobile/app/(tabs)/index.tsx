@@ -1,15 +1,10 @@
 import { useCallback } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { fetchAscents, type Ascent } from '../../src/api/client';
-import { useAuthStore } from '../../src/store/useAuthStore';
+import { fetchAscents } from '../../src/api/client';
+import { ClimbCard, EmptyState, LoadingBlock, Screen } from '../../src/components/ui';
+import { colors, radius, space, type } from '../../src/theme';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -24,7 +19,7 @@ function isThisWeek(iso: string) {
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.meta}>{label}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statValue}>{value}</Text>
     </View>
   );
@@ -32,7 +27,6 @@ function StatBox({ label, value }: { label: string; value: string }) {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['ascents'],
     queryFn: fetchAscents,
@@ -55,16 +49,16 @@ export default function HomeScreen() {
     .slice(0, 2);
 
   return (
-    <View style={styles.screen}>
+    <Screen>
       <View style={styles.header}>
+        <Text style={styles.kicker}>Boulder Logs</Text>
         <Text style={styles.title}>This week</Text>
-        <Pressable style={styles.userBtn} onPress={() => router.push('/Profile')}>
-          <Text>{user?.name ?? 'User'}</Text>
-        </Pressable>
       </View>
 
-      {isLoading ? <ActivityIndicator style={styles.centerPad} /> : null}
-      {isError ? <Text style={styles.centerPad}>Could not load climbs.</Text> : null}
+      {isLoading ? <LoadingBlock /> : null}
+      {isError ? (
+        <EmptyState title="Could not load climbs." hint="Check that the API is running." />
+      ) : null}
 
       {!isLoading && !isError ? (
         <View style={styles.body}>
@@ -74,83 +68,82 @@ export default function HomeScreen() {
             <StatBox label="This week" value={String(thisWeek)} />
           </View>
 
-          <Text style={styles.recentLabel}>Recent (2 most recent ascents)</Text>
+          <Text style={styles.section}>Recent</Text>
           {recent.length === 0 ? (
-            <Text style={styles.meta}>No climbs yet</Text>
+            <EmptyState
+              title="No climbs yet"
+              hint="Open Logbook and tap Log climb to start a diary."
+            />
           ) : (
-            recent.map((item: Ascent) => (
-              <Pressable
-                key={item.id}
-                style={styles.row}
-                onPress={() => router.push(`/ascent/${item.id}`)}
-              >
-                <Text>
-                  {item.routeName}  ·  {item.grade}  ·  {item.completed ? 'SEND' : 'project'}
-                </Text>
-              </Pressable>
-            ))
+            <View style={styles.recentList}>
+              {recent.map((item) => (
+                <ClimbCard
+                  key={item.id}
+                  item={item}
+                  onPress={() => router.push(`/ascent/${item.id}`)}
+                />
+              ))}
+            </View>
           )}
         </View>
       ) : null}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    paddingHorizontal: space.lg,
+    paddingTop: space.lg,
+    paddingBottom: space.md,
+  },
+  kicker: {
+    color: colors.muted,
+    fontSize: type.meta,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: space.xs,
   },
   title: {
-    fontSize: 18,
-  },
-  userBtn: {
-    borderWidth: 1,
-    borderColor: '#000',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    fontSize: type.title,
+    fontWeight: '700',
+    color: colors.ink,
   },
   body: {
-    padding: 16,
+    paddingHorizontal: space.lg,
+    paddingBottom: space.xl,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
+    gap: space.sm,
+    marginBottom: space.xl,
   },
   stat: {
     flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#000',
-    padding: 10,
+    borderColor: colors.line,
+    padding: space.md,
+  },
+  statLabel: {
+    color: colors.muted,
+    fontSize: type.meta,
   },
   statValue: {
-    fontSize: 22,
+    fontSize: type.stat,
+    fontWeight: '700',
+    color: colors.ink,
     marginTop: 6,
   },
-  recentLabel: {
-    marginBottom: 8,
+  section: {
+    fontSize: type.section,
+    fontWeight: '700',
+    color: colors.ink,
+    marginBottom: space.md,
   },
-  row: {
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 12,
-    marginBottom: 8,
-  },
-  meta: {
-    color: '#444',
-  },
-  centerPad: {
-    marginTop: 24,
-    textAlign: 'center',
+  recentList: {
+    gap: space.md,
   },
 });

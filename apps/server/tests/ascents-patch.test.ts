@@ -61,6 +61,23 @@ describe('PATCH /api/ascents/:id', () => {
     expect(two.body.imageKeys).toEqual([first, second]);
   });
 
+  it('stores videoKey after a clip upload', async () => {
+    const created = await request(app).post('/api/ascents').send({
+      routeName: 'Video Patch',
+      grade: 'V4',
+    });
+    expect(created.status).toBe(201);
+    createdIds.push(created.body.id);
+
+    const key = `ascents/${created.body.userId}/beta.mp4`;
+    const response = await request(app)
+      .patch(`/api/ascents/${created.body.id}`)
+      .send({ videoKey: key });
+
+    expect(response.status).toBe(200);
+    expect(response.body.videoKey).toBe(key);
+  });
+
   it('returns 400 when the body is empty', async () => {
     const created = await request(app).post('/api/ascents').send({
       routeName: 'Empty Patch',

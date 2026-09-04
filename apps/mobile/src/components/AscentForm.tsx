@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  DangerButton,
+  ErrorText,
+  Field,
+  Hint,
+  PrimaryButton,
+  SecondaryButton,
+  SectionLabel,
+} from './ui';
+import { colors, radius, space } from '../theme';
 import {
   presignGets,
   presignUpload,
@@ -8,6 +18,7 @@ import {
   type Ascent,
   type AscentWrite,
 } from '../api/client';
+import { AscentVideoPlayer } from './AscentVideoPlayer';
 
 type Props = {
   initial?: Ascent;
@@ -22,7 +33,10 @@ function allowedContentType(mime: string | null | undefined) {
   if (!mime || mime === 'image/jpg') {
     return 'image/jpeg';
   }
-  if (/^(image\/(jpeg|png|webp|gif)|video\/mp4)$/.test(mime)) {
+  if (mime === 'video/x-quicktime') {
+    return 'video/quicktime';
+  }
+  if (/^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm))$/.test(mime)) {
     return mime;
   }
   return null;
@@ -52,10 +66,13 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [newKeys, setNewKeys] = useState<string[]>([]);
   const [photoUrls, setPhotoUrls] = useState<{ key: string; url: string }[]>([]);
+  const [newVideoKey, setNewVideoKey] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState<string | undefined>();
 
   const savedKeySig = (initial?.imageKeys ?? []).join('|');
+  const savedVideoKey = initial?.videoKey ?? '';
 
   useEffect(() => {
     if (!initial) {
@@ -92,6 +109,33 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
       cancelled = true;
     };
   }, [savedKeySig]);
+
+  useEffect(() => {
+    if (newVideoKey) {
+      return;
+    }
+    if (!savedVideoKey) {
+      setVideoUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+    presignGets([savedVideoKey])
+      .then((items) => {
+        if (!cancelled) {
+          setVideoUrl(items[0]?.url ?? null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setUploadError('Could not load video.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [savedVideoKey, newVideoKey]);
 
   async function pickAndUpload() {
     if (busy || uploadBusy) {
@@ -136,6 +180,54 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
     }
   }
 
+  async function pickAndUploadVideo() {
+    if (busy || uploadBusy) {
+      return;
+    }
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setUploadError('Photo library permission is required to pick a beta clip.');
+      return;
+    }
+
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['videos'],
+      allowsMultipleSelection: false,
+      quality: 1,
+    });
+    if (picked.canceled || !picked.assets[0]) {
+      return;
+    }
+
+    const asset = picked.assets[0];
+    const contentType = allowedContentType(asset.mimeType);
+    if (!contentType || !contentType.startsWith('video/')) {
+      setUploadError('That video type is not supported. Use mp4, mov, or webm.');
+      return;
+    }
+
+    setUploadBusy(true);
+    setUploadError(undefined);
+    try {
+      const signed = await presignUpload(
+        asset.fileName ?? fileNameFromUri(asset.uri, 'beta.mp4'),
+        contentType,
+      );
+      const bytes = await bytesFromAsset(asset);
+      await putToSignedUrl(signed.url, bytes, signed.contentType);
+      const [view] = await presignGets([signed.key]);
+      setNewVideoKey(signed.key);
+      setVideoUrl(view?.url ?? signed.url);
+    } catch {
+      setUploadError(
+        'Could not PUT the video. In DevTools Network, look for localhost:9000 (MinIO), not :4000 (Express).',
+      );
+    } finally {
+      setUploadBusy(false);
+    }
+  }
+
   function submit() {
     if (busy) {
       return;
@@ -149,60 +241,75 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
       completed,
       notes: notes.trim() || undefined,
       ...(imageKeys.length > 0 || newKeys.length > 0 ? { imageKeys } : {}),
+      ...(newVideoKey ? { videoKey: newVideoKey } : {}),
     });
   }
 
   return (
     <View style={styles.form}>
-      <Text>Route name</Text>
-      <TextInput style={styles.input} value={routeName} onChangeText={setRouteName} />
-
-      <Text>Grade</Text>
-      <TextInput style={styles.input} value={grade} onChangeText={setGrade} placeholder="V5" />
-
-      <Text>Attempts</Text>
-      <TextInput
-        style={styles.input}
+      <SectionLabel>Climb</SectionLabel>
+      <Field label="Route name" value={routeName} onChangeText={setRouteName} />
+      <Field label="Grade" value={grade} onChangeText={setGrade} placeholder="V5" />
+      <Field
+        label="Attempts"
         value={attempts}
         onChangeText={setAttempts}
         keyboardType="number-pad"
       />
 
-      <Text>Status</Text>
-      <Pressable style={styles.input} onPress={() => setCompleted((v) => !v)}>
-        <Text>{completed ? 'SEND' : 'project'}</Text>
-      </Pressable>
+      <Text style={styles.fieldLabel}>Status</Text>
+      <View style={styles.toggleRow}>
+        <Pressable
+          style={[styles.toggle, completed && styles.toggleOn]}
+          onPress={() => setCompleted(true)}
+        >
+          <Text style={[styles.toggleText, completed && styles.toggleTextOn]}>SEND</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.toggle, !completed && styles.toggleProjectOn]}
+          onPress={() => setCompleted(false)}
+        >
+          <Text style={[styles.toggleText, !completed && styles.toggleProjectText]}>
+            project
+          </Text>
+        </Pressable>
+      </View>
 
-      <Text>Notes</Text>
-      <TextInput
-        style={[styles.input, styles.notes]}
-        value={notes}
-        onChangeText={setNotes}
-        multiline
+      <Field label="Notes" value={notes} onChangeText={setNotes} multiline />
+
+      <SectionLabel>Photos</SectionLabel>
+      <SecondaryButton
+        label={uploadBusy ? 'Uploading…' : 'Pick photos'}
+        onPress={pickAndUpload}
+        disabled={busy || uploadBusy}
       />
-
-      <Text>Photos</Text>
-      <Pressable style={styles.btn} onPress={pickAndUpload} disabled={busy || uploadBusy}>
-        <Text>{uploadBusy ? 'Uploading…' : 'Pick photos'}</Text>
-      </Pressable>
       {photoUrls.map((photo) => (
         <Image key={photo.key} source={{ uri: photo.url }} style={styles.photo} />
       ))}
       {newKeys.length > 0 ? (
-        <Text>{newKeys.length} new photo(s) — Save to keep them on this log.</Text>
+        <Hint>{newKeys.length} new photo(s) — Save to keep them on this log.</Hint>
       ) : null}
-      {uploadError ? <Text style={styles.error}>{uploadError}</Text> : null}
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <SectionLabel>Beta clip</SectionLabel>
+      <SecondaryButton
+        label={uploadBusy ? 'Uploading…' : 'Pick video'}
+        onPress={pickAndUploadVideo}
+        disabled={busy || uploadBusy}
+      />
+      {videoUrl ? <AscentVideoPlayer key={videoUrl} uri={videoUrl} /> : null}
+      {newVideoKey ? <Hint>New clip — Save to keep it on this log.</Hint> : null}
 
-      <Pressable style={styles.btn} onPress={submit} disabled={busy}>
-        <Text>{busy ? 'Saving…' : submitLabel}</Text>
-      </Pressable>
+      <ErrorText>{uploadError}</ErrorText>
+      <ErrorText>{error}</ErrorText>
+
+      <PrimaryButton
+        label={busy ? 'Saving…' : submitLabel}
+        onPress={submit}
+        disabled={busy || uploadBusy}
+      />
 
       {onDelete ? (
-        <Pressable style={styles.btn} onPress={onDelete} disabled={busy}>
-          <Text>Delete</Text>
-        </Pressable>
+        <DangerButton label="Delete" onPress={onDelete} disabled={busy || uploadBusy} />
       ) : null}
     </View>
   );
@@ -210,33 +317,49 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
 
 const styles = StyleSheet.create({
   form: {
-    padding: 16,
-    gap: 8,
+    padding: space.lg,
+    gap: space.md,
   },
-  input: {
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.muted,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: space.sm,
+  },
+  toggle: {
+    flex: 1,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#000',
-    padding: 8,
-    marginBottom: 8,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
-  notes: {
-    minHeight: 80,
-    textAlignVertical: 'top',
+  toggleOn: {
+    backgroundColor: colors.sendBg,
+    borderColor: colors.sendBg,
+  },
+  toggleProjectOn: {
+    backgroundColor: colors.projectBg,
+    borderColor: colors.projectBg,
+  },
+  toggleText: {
+    fontWeight: '700',
+    color: colors.muted,
+  },
+  toggleTextOn: {
+    color: colors.sendText,
+  },
+  toggleProjectText: {
+    color: colors.projectText,
   },
   photo: {
     width: '100%',
     height: 180,
-    backgroundColor: '#ddd',
-    marginBottom: 8,
-  },
-  btn: {
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 10,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  error: {
-    color: '#900',
+    backgroundColor: colors.line,
+    borderRadius: radius.md,
   },
 });

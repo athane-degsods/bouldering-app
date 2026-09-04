@@ -1,8 +1,10 @@
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AscentForm } from '../../src/components/AscentForm';
 import { deleteAscent, fetchAscent, updateAscent } from '../../src/api/client';
+import { EmptyState, LoadingBlock, Screen } from '../../src/components/ui';
+import { colors } from '../../src/theme';
 
 export default function AscentDetailScreen() {
   const { id: rawId } = useLocalSearchParams<{ id: string | string[] }>();
@@ -35,21 +37,25 @@ export default function AscentDetailScreen() {
 
   if (!id) {
     return (
-      <View style={{ padding: 16 }}>
-        <Text>Missing id.</Text>
-      </View>
+      <Screen>
+        <EmptyState title="Missing id." />
+      </Screen>
     );
   }
 
   if (ascent.isLoading) {
-    return <ActivityIndicator style={{ marginTop: 24 }} />;
+    return (
+      <Screen>
+        <LoadingBlock />
+      </Screen>
+    );
   }
 
   if (ascent.isError || !ascent.data) {
     return (
-      <View style={{ padding: 16 }}>
-        <Text>Could not load this climb.</Text>
-      </View>
+      <Screen>
+        <EmptyState title="Could not load this climb." />
+      </Screen>
     );
   }
 
@@ -58,7 +64,7 @@ export default function AscentDetailScreen() {
     update.isError || remove.isError ? 'Could not save or delete.' : undefined;
 
   return (
-    <ScrollView>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <AscentForm
         initial={ascent.data}
         submitLabel="Save"
@@ -70,3 +76,13 @@ export default function AscentDetailScreen() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+  content: {
+    paddingBottom: 40,
+  },
+});

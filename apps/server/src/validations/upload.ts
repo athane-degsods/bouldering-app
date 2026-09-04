@@ -5,7 +5,10 @@ export const presignBodySchema = z.object({
   fileName: z.string().min(1),
   contentType: z
     .string()
-    .regex(/^(image\/(jpeg|png|webp|gif)|video\/mp4)$/, 'Unsupported content type'),
+    .regex(
+      /^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm))$/,
+      'Unsupported content type',
+    ),
 });
 
 export const presignResponseSchema = z.object({

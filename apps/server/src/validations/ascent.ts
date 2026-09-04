@@ -28,6 +28,7 @@ export const createAscentBodySchema = z.object({
   completed: z.boolean().optional(),
   notes: z.string().optional(),
   imageKeys: z.array(z.string().min(1)).optional(),
+  videoKey: z.string().min(1).nullable().optional(),
 });
 
 /** PATCH /api/ascents/:id — at least one field must be present. */

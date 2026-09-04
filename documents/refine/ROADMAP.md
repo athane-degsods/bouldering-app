@@ -23,5 +23,6 @@ flowchart LR
 | 4 | [roadmap/04-logbook-crud.md](roadmap/04-logbook-crud.md) |
 | 5 | [roadmap/05-photo-upload.md](roadmap/05-photo-upload.md) |
 | 6 | [roadmap/06-video-upload.md](roadmap/06-video-upload.md) |
+| 7 | UI polish (no extra roadmap file) — **do this next** |
 
-Later (not scheduled): real auth, goals, offline cache, Sentry.
+Video is in. Do not add JWT.

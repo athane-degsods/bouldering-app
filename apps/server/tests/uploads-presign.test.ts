@@ -17,6 +17,18 @@ describe('POST /api/uploads/presign', () => {
     expect(response.body.url).toContain('bouldering');
   });
 
+  it('signs a PUT url for a video clip', async () => {
+    const response = await request(app).post('/api/uploads/presign').send({
+      fileName: 'beta.mov',
+      contentType: 'video/quicktime',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.key).toMatch(new RegExp(`^ascents/${TEST_USER_ID}/.+-beta\\.mov$`));
+    expect(response.body.contentType).toBe('video/quicktime');
+    expect(response.body.url).toMatch(/^https?:\/\//);
+  });
+
   it('returns 400 when contentType is missing', async () => {
     const response = await request(app).post('/api/uploads/presign').send({
       fileName: 'climb.jpg',

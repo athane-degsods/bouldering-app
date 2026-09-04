@@ -1,16 +1,20 @@
-/**
- * Tab layout (`app/(tabs)/_layout.tsx`) — the inner frame (the bottom bar).
- *
- * The folder name `(tabs)` is a group: it does not show up in the URL.
- * `name` must match the file: `index.tsx` → `index` (this is `/`).
- * `_layout` files are never URLs — do not open `/_layout.tsx` in the browser.
- */
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../src/theme';
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ headerTitleAlign: 'center' }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.line,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{

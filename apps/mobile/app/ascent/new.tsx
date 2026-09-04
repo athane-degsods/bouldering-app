@@ -1,8 +1,9 @@
-import { ScrollView } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { AscentForm } from '../../src/components/AscentForm';
 import { createAscent } from '../../src/api/client';
+import { colors } from '../../src/theme';
 
 export default function NewAscentScreen() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function NewAscentScreen() {
   });
 
   return (
-    <ScrollView>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <AscentForm
         submitLabel="Save"
         busy={create.isPending}
@@ -26,3 +27,13 @@ export default function NewAscentScreen() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+  content: {
+    paddingBottom: 40,
+  },
+});

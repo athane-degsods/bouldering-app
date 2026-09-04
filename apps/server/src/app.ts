@@ -21,7 +21,7 @@ app.use(express.json());
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
-    message: '🧗‍♂️ Bouldering API server is healthy and running!',
+    message: 'Bouldering API server is healthy and running!',
   });
 });
 

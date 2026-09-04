@@ -76,6 +76,7 @@ export type AscentWrite = {
   completed: boolean;
   notes?: string;
   imageKeys?: string[];
+  videoKey?: string;
 };
 
 export async function createAscent(body: AscentWrite): Promise<Ascent> {

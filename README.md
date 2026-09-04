@@ -1,6 +1,6 @@
 # Boulder Logs
 
-A phone diary for **indoor bouldering**. A climber logs problems (route name, grade, attempts, send vs project, notes) and can attach **one or more photos**. This is a CS624 team project. Video upload is designed but **not built yet**.
+A phone diary for **indoor bouldering**. A climber logs problems (route name, grade, attempts, send vs project, notes), photos, and a short **beta clip** so they can review the sequence after the session. This is a CS624 team project.
 
 Product freeze: [`documents/refine/REQUIREMENTS.md`](documents/refine/REQUIREMENTS.md).  
 How to run and test: [`DEVELOPMENT.md`](DEVELOPMENT.md).  
@@ -12,6 +12,7 @@ Build order (historical slices): [`documents/refine/ROADMAP.md`](documents/refin
 - **Logbook** — list, create, edit, delete climbs for one seeded test user.
 - **Profile** — shows that test climber (not real login).
 - **Photos** — pick from the library, upload to object storage, save keys on the ascent, view them again from signed URLs.
+- **Beta clip** — pick one existing video (`mp4` / `mov` / `webm`), upload the same way as photos, play it on the log.
 
 There is **no password, no multi-user UI, and no offline cache**. If Express is down, the app shows **No connection**.
 
@@ -30,7 +31,7 @@ There is **no password, no multi-user UI, and no offline cache**. If Express is 
 | Tests | **Vitest + Supertest** | API tests in `apps/server/tests/` |
 | Lint | ESLint | Repo root `npm run lint` |
 
-**Not in this stage:** JWT, MongoDB, SWR, AsyncStorage, Sentry, Reactotron, in-app video recording.
+**Not in this project:** JWT, MongoDB, SWR, AsyncStorage, Sentry, Reactotron, in-app video recording.
 
 The repo is an **npm workspaces** monorepo: `apps/mobile` and `apps/server`. Install once at the root (`npm install`).
 
@@ -167,4 +168,5 @@ bouldering-app/
 
 ## Next
 
-Video: same presign helper, save `videoKey`, no in-app recording. See [`documents/refine/roadmap/06-video-upload.md`](documents/refine/roadmap/06-video-upload.md). After that: real auth (JWT), not in MVP.
+1. **UI polish** now that video playback is in.
+2. JWT / real login stays **out of this project**.
