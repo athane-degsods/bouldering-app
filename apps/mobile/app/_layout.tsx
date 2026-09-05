@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { fetchHealth, queryClient } from '../src/api/client';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { colors, space, type } from '../src/theme';
@@ -61,9 +62,11 @@ function RootShell() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RootShell />
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <RootShell />
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
 

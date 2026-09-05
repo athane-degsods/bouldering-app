@@ -9,11 +9,16 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, space, type } from '../theme';
 import type { Ascent } from '../api/client';
 
 export function Screen({ children, style }: { children: ReactNode; style?: ViewStyle }) {
-  return <View style={[styles.screen, style]}>{children}</View>;
+  return (
+    <SafeAreaView style={[styles.screen, style]} edges={['top', 'left', 'right']}>
+      {children}
+    </SafeAreaView>
+  );
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
