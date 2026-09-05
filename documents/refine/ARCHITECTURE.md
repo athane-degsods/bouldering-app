@@ -1,6 +1,6 @@
 # Architecture
 
-Official how-the-system-works doc. Product freeze: `REQUIREMENTS.md`. Build order: `ROADMAP.md` and `roadmap/`. Current files on disk: `documents/original/boilerplate.md`.
+Official how-the-system-works doc. Product freeze: `REQUIREMENTS.md`. Why each library exists: `STACK.md`. Phone UI: `FRONTEND.md`. API: `BACKEND.md`. Build order: `ROADMAP.md` and `roadmap/`. Current files on disk: `documents/original/boilerplate.md`.
 
 ## 1. Stack (decisions)
 

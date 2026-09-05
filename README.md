@@ -3,6 +3,9 @@
 A phone diary for **indoor bouldering**. A climber logs problems (route name, grade, attempts, send vs project, notes), photos, and a short **beta clip** so they can review the sequence after the session. This is a CS624 team project.
 
 Product freeze: [`documents/refine/REQUIREMENTS.md`](documents/refine/REQUIREMENTS.md).  
+What each library is for: [`documents/refine/STACK.md`](documents/refine/STACK.md).  
+Frontend (screens, components, data flow): [`documents/refine/FRONTEND.md`](documents/refine/FRONTEND.md).  
+Backend (routes, Prisma, presign): [`documents/refine/BACKEND.md`](documents/refine/BACKEND.md).  
 How to run and test: [`DEVELOPMENT.md`](DEVELOPMENT.md).  
 Build order (historical slices): [`documents/refine/ROADMAP.md`](documents/refine/ROADMAP.md).
 
