@@ -18,6 +18,9 @@ export const queryClient = new QueryClient({
   },
 });
 
+const S3_CLIENT =
+  Platform.OS === 'android' ? 'android' : Platform.OS === 'ios' ? 'ios' : 'web';
+
 const HEALTH_TIMEOUT_MS = 4000;
 
 /** True when Express answers GET /api/health. Used by the root layout. */
@@ -126,7 +129,11 @@ export async function presignUpload(
   const response = await fetch(`${BASE_URL}/api/uploads/presign`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileName, contentType }),
+    body: JSON.stringify({
+      fileName,
+      contentType,
+      client: S3_CLIENT,
+    }),
   });
   if (!response.ok) {
     throw new Error('Failed to get upload URL');
@@ -163,7 +170,10 @@ export async function presignGets(keys: string[]): Promise<SignedGet[]> {
   const response = await fetch(`${BASE_URL}/api/uploads/presign-get`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ keys }),
+    body: JSON.stringify({
+      keys,
+      client: S3_CLIENT,
+    }),
   });
   if (!response.ok) {
     throw new Error('Failed to get download URLs');

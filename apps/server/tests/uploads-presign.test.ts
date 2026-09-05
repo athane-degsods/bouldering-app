@@ -29,6 +29,33 @@ describe('POST /api/uploads/presign', () => {
     expect(response.body.url).toMatch(/^https?:\/\//);
   });
 
+  it('signs android PUTs with S3_PUBLIC_ENDPOINT when set', async () => {
+    const previous = process.env.S3_PUBLIC_ENDPOINT;
+    process.env.S3_PUBLIC_ENDPOINT = 'http://10.0.2.2:9000';
+
+    const web = await request(app).post('/api/uploads/presign').send({
+      fileName: 'climb.jpg',
+      contentType: 'image/jpeg',
+      client: 'web',
+    });
+    const android = await request(app).post('/api/uploads/presign').send({
+      fileName: 'climb.jpg',
+      contentType: 'image/jpeg',
+      client: 'android',
+    });
+
+    if (previous === undefined) {
+      delete process.env.S3_PUBLIC_ENDPOINT;
+    } else {
+      process.env.S3_PUBLIC_ENDPOINT = previous;
+    }
+
+    expect(web.status).toBe(200);
+    expect(web.body.url).toContain('localhost:9000');
+    expect(android.status).toBe(200);
+    expect(android.body.url).toContain('10.0.2.2:9000');
+  });
+
   it('returns 400 when contentType is missing', async () => {
     const response = await request(app).post('/api/uploads/presign').send({
       fileName: 'climb.jpg',

@@ -131,9 +131,7 @@ Optional, **Android emulator only** (the phone must reach MinIO; `localhost` ins
 S3_PUBLIC_ENDPOINT=http://10.0.2.2:9000
 ```
 
-`AWS_ENDPOINT` stays `http://localhost:9000` so **Express** (on the host) can talk to Docker. `S3_PUBLIC_ENDPOINT` is the host baked into signed URLs the **device** opens.
-
-iOS Simulator and Expo **web** can keep using `localhost:9000`.
+`AWS_ENDPOINT` stays `http://localhost:9000` so **Express** (on the host) can talk to Docker. `S3_PUBLIC_ENDPOINT` is used only when the mobile app sends `client: "android"` on presign. Expo **web** and iOS Simulator keep `localhost:9000` in the signed URL even if this var is set.
 
 Prisma 7 loads env from `apps/server/prisma.config.ts` (`import "dotenv/config"`). Runtime loads env from `apps/server/src/lib/prisma.ts`.
 

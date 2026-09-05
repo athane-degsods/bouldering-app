@@ -8,17 +8,29 @@ function required(name: string) {
   return value;
 }
 
-/** Endpoint baked into the signed URL (phone must be able to reach this host). */
-export function s3SignEndpoint() {
-  return process.env.S3_PUBLIC_ENDPOINT || process.env.AWS_ENDPOINT || '';
+export type S3ClientKind = 'android' | 'web' | 'ios';
+
+/**
+ * Host baked into the signed URL. Signature includes this Host header, so it
+ * must be what the browser/phone will actually call.
+ * Web and iOS Simulator: AWS_ENDPOINT (localhost).
+ * Android emulator: S3_PUBLIC_ENDPOINT (10.0.2.2) when set.
+ */
+export function s3SignEndpoint(client?: S3ClientKind) {
+  const local = process.env.AWS_ENDPOINT || '';
+  const publicEndpoint = process.env.S3_PUBLIC_ENDPOINT || '';
+  if (client === 'android' && publicEndpoint) {
+    return publicEndpoint;
+  }
+  return local || publicEndpoint;
 }
 
 export function s3Bucket() {
   return required('S3_BUCKET');
 }
 
-export function createS3Client() {
-  const endpoint = s3SignEndpoint();
+export function createS3Client(client?: S3ClientKind) {
+  const endpoint = s3SignEndpoint(client);
   if (!endpoint) {
     throw new Error('AWS_ENDPOINT or S3_PUBLIC_ENDPOINT is not set');
   }

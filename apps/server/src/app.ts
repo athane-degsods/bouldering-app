@@ -36,6 +36,7 @@ app.post('/api/uploads/presign', async (req: Request, res: Response) => {
     const signed = await createPresignedPut(
       bodyResult.data.fileName,
       bodyResult.data.contentType,
+      bodyResult.data.client,
     );
     return res.status(200).json(presignResponseSchema.parse(signed));
   } catch (error) {
@@ -52,7 +53,7 @@ app.post('/api/uploads/presign-get', async (req: Request, res: Response) => {
 
   try {
     const items = await Promise.all(
-      bodyResult.data.keys.map((key) => createPresignedGet(key)),
+      bodyResult.data.keys.map((key) => createPresignedGet(key, bodyResult.data.client)),
     );
     return res.status(200).json(presignGetResponseSchema.parse({ items }));
   } catch (error) {

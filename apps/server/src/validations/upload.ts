@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const s3ClientSchema = z.enum(['android', 'web', 'ios']).optional();
+
 /** POST /api/uploads/presign */
 export const presignBodySchema = z.object({
   fileName: z.string().min(1),
@@ -9,6 +11,7 @@ export const presignBodySchema = z.object({
       /^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm))$/,
       'Unsupported content type',
     ),
+  client: s3ClientSchema,
 });
 
 export const presignResponseSchema = z.object({
@@ -20,6 +23,7 @@ export const presignResponseSchema = z.object({
 /** POST /api/uploads/presign-get — signed GET URLs for keys already in MinIO. */
 export const presignGetBodySchema = z.object({
   keys: z.array(z.string().min(1)).min(1).max(20),
+  client: s3ClientSchema,
 });
 
 export const presignGetResponseSchema = z.object({
