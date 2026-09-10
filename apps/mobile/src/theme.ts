@@ -13,6 +13,11 @@ export const colors = {
   danger: '#8B2E2E',
   dangerBg: '#F6E4E1',
   overlay: '#1C1915',
+  gradeEasy: '#43A047',
+  gradeModerate: '#F0B429',
+  gradeHard: '#EF6C00',
+  gradeExpert: '#E53935',
+  gradeOnColor: '#FFFFFF',
 };
 
 export const space = {

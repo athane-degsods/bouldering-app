@@ -77,10 +77,37 @@ export function StatusBadge({ completed }: { completed: boolean }) {
   );
 }
 
+/** V0–V2 green, V3–V4 yellow, V5–V6 orange, V7+ red. Other grade strings stay chalk. */
+function vScaleNumber(grade: string) {
+  const match = grade.trim().match(/^v\s*(\d+)/i);
+  if (!match) {
+    return null;
+  }
+  return Number.parseInt(match[1], 10);
+}
+
+function gradeChipColors(grade: string) {
+  const n = vScaleNumber(grade);
+  if (n === null) {
+    return { backgroundColor: colors.bg, color: colors.ink };
+  }
+  if (n <= 2) {
+    return { backgroundColor: colors.gradeEasy, color: colors.gradeOnColor };
+  }
+  if (n <= 4) {
+    return { backgroundColor: colors.gradeModerate, color: colors.gradeOnColor };
+  }
+  if (n <= 6) {
+    return { backgroundColor: colors.gradeHard, color: colors.gradeOnColor };
+  }
+  return { backgroundColor: colors.gradeExpert, color: colors.gradeOnColor };
+}
+
 export function GradeChip({ grade }: { grade: string }) {
+  const tone = gradeChipColors(grade);
   return (
-    <View style={styles.gradeChip}>
-      <Text style={styles.gradeText}>{grade}</Text>
+    <View style={[styles.gradeChip, { backgroundColor: tone.backgroundColor }]}>
+      <Text style={[styles.gradeText, { color: tone.color }]}>{grade}</Text>
     </View>
   );
 }
@@ -241,14 +268,15 @@ const styles = StyleSheet.create({
     color: colors.projectText,
   },
   gradeChip: {
-    backgroundColor: colors.bg,
-    borderRadius: radius.sm,
-    paddingHorizontal: 8,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
     paddingVertical: 4,
+    minWidth: 36,
+    alignItems: 'center',
   },
   gradeText: {
     fontWeight: '700',
-    color: colors.ink,
+    fontSize: type.meta,
   },
   field: {
     gap: 6,
