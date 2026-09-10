@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   DangerButton,
   ErrorText,
@@ -40,6 +41,33 @@ function allowedContentType(mime: string | null | undefined) {
     return mime;
   }
   return null;
+}
+
+function videoContentType(mime: string | null | undefined, fileName: string) {
+  const fromMime = allowedContentType(mime);
+  if (fromMime?.startsWith('video/')) {
+    return fromMime;
+  }
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith('.mp4') || lower.endsWith('.m4v')) {
+    return 'video/mp4';
+  }
+  if (lower.endsWith('.mov') || lower.endsWith('.qt')) {
+    return 'video/quicktime';
+  }
+  if (lower.endsWith('.webm')) {
+    return 'video/webm';
+  }
+  return null;
+}
+
+function uploadFailMessage(kind: 'photo' | 'video', error: unknown) {
+  const detail = error instanceof Error ? error.message : '';
+  const where =
+    Platform.OS === 'android'
+      ? 'MinIO via 10.0.2.2 (not Express :4000)'
+      : 'MinIO (not Express :4000)';
+  return `Could not upload the ${kind}${detail ? ` (${detail})` : ''}. PUT goes to ${where}.`;
 }
 
 function fileNameFromUri(uri: string, fallback: string) {
@@ -165,16 +193,14 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
           contentType,
         );
         const bytes = await bytesFromAsset(asset);
-        await putToSignedUrl(signed.url, bytes, signed.contentType);
+        await putToSignedUrl(signed.url, bytes, signed.contentType, asset.uri);
         const [view] = await presignGets([signed.key]);
         uploaded.push({ key: signed.key, url: view?.url ?? signed.url });
       }
       setNewKeys((current) => [...current, ...uploaded.map((item) => item.key)]);
       setPhotoUrls((current) => [...current, ...uploaded]);
-    } catch {
-      setUploadError(
-        'Could not PUT the photo. In DevTools Network, look for localhost:9000 (MinIO), not :4000 (Express).',
-      );
+    } catch (error) {
+      setUploadError(uploadFailMessage('photo', error));
     } finally {
       setUploadBusy(false);
     }
@@ -185,24 +211,49 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
       return;
     }
 
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setUploadError('Photo library permission is required to pick a beta clip.');
-      return;
+    let uri: string;
+    let fileName: string;
+    let mimeType: string | null | undefined;
+
+    if (Platform.OS === 'android') {
+      // Gallery-only picker hides Downloads/Files. The emulator usually has clips there.
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ['video/mp4', 'video/quicktime', 'video/webm', 'video/*'],
+        // Expo Go cannot uploadAsync from DocumentPicker's cache copy. Keep the
+        // SAF/content URI and let putToSignedUrl copy it into this app's cache.
+        copyToCacheDirectory: false,
+        multiple: false,
+      });
+      if (picked.canceled || !picked.assets[0]) {
+        return;
+      }
+      const asset = picked.assets[0];
+      uri = asset.uri;
+      fileName = asset.name || fileNameFromUri(asset.uri, 'beta.mp4');
+      mimeType = asset.mimeType;
+    } else {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setUploadError('Photo library permission is required to pick a beta clip.');
+        return;
+      }
+
+      const picked = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['videos'],
+        allowsMultipleSelection: false,
+        quality: 1,
+      });
+      if (picked.canceled || !picked.assets[0]) {
+        return;
+      }
+      const asset = picked.assets[0];
+      uri = asset.uri;
+      fileName = asset.fileName ?? fileNameFromUri(asset.uri, 'beta.mp4');
+      mimeType = asset.mimeType;
     }
 
-    const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['videos'],
-      allowsMultipleSelection: false,
-      quality: 1,
-    });
-    if (picked.canceled || !picked.assets[0]) {
-      return;
-    }
-
-    const asset = picked.assets[0];
-    const contentType = allowedContentType(asset.mimeType);
-    if (!contentType || !contentType.startsWith('video/')) {
+    const contentType = videoContentType(mimeType, fileName);
+    if (!contentType) {
       setUploadError('That video type is not supported. Use mp4, mov, or webm.');
       return;
     }
@@ -210,19 +261,21 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
     setUploadBusy(true);
     setUploadError(undefined);
     try {
-      const signed = await presignUpload(
-        asset.fileName ?? fileNameFromUri(asset.uri, 'beta.mp4'),
-        contentType,
-      );
-      const bytes = await bytesFromAsset(asset);
-      await putToSignedUrl(signed.url, bytes, signed.contentType);
+      const signed = await presignUpload(fileName, contentType);
+      let body: Blob = new Blob();
+      if (Platform.OS === 'web') {
+        const response = await fetch(uri);
+        if (!response.ok) {
+          throw new Error('Failed to read picked file');
+        }
+        body = await response.blob();
+      }
+      await putToSignedUrl(signed.url, body, signed.contentType, uri);
       const [view] = await presignGets([signed.key]);
       setNewVideoKey(signed.key);
       setVideoUrl(view?.url ?? signed.url);
-    } catch {
-      setUploadError(
-        'Could not PUT the video. In DevTools Network, look for localhost:9000 (MinIO), not :4000 (Express).',
-      );
+    } catch (error) {
+      setUploadError(uploadFailMessage('video', error));
     } finally {
       setUploadBusy(false);
     }
@@ -291,6 +344,11 @@ export function AscentForm({ initial, submitLabel, busy, error, onSubmit, onDele
       ) : null}
 
       <SectionLabel>Beta clip</SectionLabel>
+      <Hint>
+        {Platform.OS === 'android'
+          ? 'Opens Files so you can pick an mp4 from Downloads, not only Gallery.'
+          : 'Pick an existing mp4, mov, or webm. The app does not record.'}
+      </Hint>
       <SecondaryButton
         label={uploadBusy ? 'Uploading…' : 'Pick video'}
         onPress={pickAndUploadVideo}

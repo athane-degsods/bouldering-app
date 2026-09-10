@@ -32,6 +32,7 @@
           "photosPermission": "Allow Boulder Logs to pick a climb photo or beta clip."
         }
       ],
+      "expo-document-picker",
       "expo-video"
     ]
   }

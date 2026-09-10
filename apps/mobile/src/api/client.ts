@@ -146,14 +146,64 @@ export async function putToSignedUrl(
   url: string,
   body: Blob,
   contentType: string,
+  fileUri?: string,
 ): Promise<void> {
+  if (fileUri && Platform.OS !== 'web') {
+    await putNativeFile(url, fileUri, contentType);
+    return;
+  }
+
   const response = await fetch(url, {
     method: 'PUT',
     headers: { 'Content-Type': contentType },
     body,
   });
   if (!response.ok) {
-    throw new Error('Failed to upload file');
+    throw new Error(`Failed to upload file (${response.status})`);
+  }
+}
+
+/**
+ * Expo Go cannot uploadAsync from DocumentPicker's own cache copy ("isn't readable").
+ * Copy into this app's cache, then stream. If that fails, read via fetch and PUT the blob.
+ */
+async function putNativeFile(url: string, fileUri: string, contentType: string) {
+  const FileSystem = await import('expo-file-system/legacy');
+  const ext = (fileUri.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) || 'bin';
+  const dest = `${FileSystem.cacheDirectory}ascent-put-${Date.now()}.${ext}`;
+
+  let localUri = fileUri;
+  try {
+    await FileSystem.copyAsync({ from: fileUri, to: dest });
+    localUri = dest;
+  } catch {
+    // content:// or a locked cache file — try the original URI below
+  }
+
+  try {
+    const result = await FileSystem.uploadAsync(url, localUri, {
+      httpMethod: 'PUT',
+      headers: { 'Content-Type': contentType },
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    });
+    if (result.status >= 200 && result.status < 300) {
+      return;
+    }
+    throw new Error(`Failed to upload file (${result.status})`);
+  } catch (uploadError) {
+    const response = await fetch(fileUri);
+    if (!response.ok) {
+      throw uploadError;
+    }
+    const blob = await response.blob();
+    const put = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body: blob,
+    });
+    if (!put.ok) {
+      throw new Error(`Failed to upload file (${put.status})`);
+    }
   }
 }
 

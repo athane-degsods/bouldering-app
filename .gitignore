@@ -22,3 +22,6 @@ tmp/
 
 # .idea folder
 .idea/
+
+# local test files
+local/

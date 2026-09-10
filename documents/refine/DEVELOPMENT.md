@@ -341,6 +341,32 @@ CORS/origin issue. Community MinIO should echo `Access-Control-Allow-Origin` for
 
 Signed URL host is `localhost:9000`, which is wrong inside the emulator. Set `S3_PUBLIC_ENDPOINT=http://10.0.2.2:9000`, restart Express, upload again.
 
+### Prisma CLI: `url` is missing in data source `db` (P1012)
+
+The schema is **Prisma 7**: `DATABASE_URL` lives in `prisma.config.ts`, not in `schema.prisma`. You ran a **global** Prisma 5 (`prisma migrate deploy` printed `Prisma CLI Version : 5.17.0`).
+
+From `apps/server` always use the workspace CLI:
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
+```
+
+You should see `Loaded Prisma config from prisma.config.ts` and version **7.9.x**, not 5.17.0.
+
+### MinIO console on :9001 does not load (Windows)
+
+`docker ps` may show MinIO **Up** but ports `9000-9001/tcp` with **no** `0.0.0.0:9000->…`. On Windows, Hyper-V often **reserves** 8985–9084, so Docker cannot bind **9000/9001** (`bind: … forbidden by its access permissions`).
+
+Publish other host ports and point `.env` at them (keep the same named volume so the `bouldering` bucket survives):
+
+```bash
+docker rm -f minio
+docker run -d --name minio -p 19000:9000 -p 19001:9001 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio server /data --console-address ":9001"
+```
+
+Then set `AWS_ENDPOINT=http://localhost:19000` and `S3_PUBLIC_ENDPOINT=http://10.0.2.2:19000`, restart Express. Console: http://localhost:19001 (minioadmin / minioadmin).
+
 ### Prisma: `imageKey` column / client mismatch
 
 Run `npx prisma migrate deploy` and `npx prisma generate` in `apps/server`, then restart `dev:server`. The column is **`imageKeys`** (array).
