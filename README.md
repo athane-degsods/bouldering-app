@@ -168,8 +168,3 @@ bouldering-app/
 ├── README.md
 └── DEVELOPMENT.md
 ```
-
-## Next
-
-1. **UI polish** now that video playback is in.
-2. JWT / real login stays **out of this project**.
